@@ -1,0 +1,76 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  SHIFT_LEAD
+  AGENT
+}
+
+model User {
+  id           String      @id @default(uuid())
+  email        String      @unique
+  fullName     String?
+  role         Role        @default(AGENT)
+  createdAt    DateTime    @default(now())
+  sessions     Session[]
+  magicTokens  MagicToken[]
+  feedbacks    Feedback[]
+}
+
+model Session {
+  id        String   @id @default(uuid())
+  userId    String
+  tokenHash String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model MagicToken {
+  id          String   @id @default(uuid())
+  userId      String
+  codeHash    String
+  tokenHash   String
+  expiresAt   DateTime
+  consumedAt  DateTime?
+  createdAt   DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt])
+}
+
+model IssueType {
+  id        String     @id @default(uuid())
+  title     String     @unique
+  createdAt DateTime   @default(now())
+  feedbacks Feedback[]
+}
+
+model Feedback {
+  id                String   @id @default(uuid())
+  createdAt         DateTime @default(now())
+  createdByUserId   String
+  issueTypeId       String
+  customerId        String?
+  customerIp        String?
+  city              String
+  centerName        String?
+  simCardNumber     String?
+  connectedOperator String?
+  area              String?
+  description       String?
+  createdBy         User     @relation(fields: [createdByUserId], references: [id], onDelete: Cascade)
+  issueType         IssueType @relation(fields: [issueTypeId], references: [id])
+
+  @@index([createdAt])
+  @@index([city])
+  @@index([issueTypeId])
+}

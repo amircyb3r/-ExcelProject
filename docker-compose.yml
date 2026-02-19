@@ -1,0 +1,25 @@
+version: '3.9'
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: callcenter
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+
+  app:
+    build: .
+    depends_on:
+      - db
+    env_file:
+      - .env.example
+    ports:
+      - "3000:3000"
+    command: sh -c "npx prisma migrate deploy && npm run prisma:seed && npm run start"
+
+volumes:
+  pg_data:
